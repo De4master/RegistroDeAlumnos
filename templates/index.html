@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Alumnos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background-color: #f4f7fc;
+    }
+
+    .header {
+      background-color: #1f3c88;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .footer {
+      background-color: #f4f7fc;
+      color: #333;
+      padding: 10px 0;
+      text-align: center;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .form-section {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-container {
+      margin-top: 30px;
+      margin-bottom: 80px;
+    }
+
+    .logo img {
+      width: 100px;
+      border-radius: 50%;
+    }
+
+    .alert-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .btn-primary {
+      background-color: #4ea8de;
+      border-color: #4ea8de;
+    }
+
+    .btn-primary:hover {
+      background-color: #3a91c7;
+      border-color: #3a91c7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera -->
+  <div class="header">
+    <div class="logo">
+      <img src="/static/imagenes/logo.jpeg" alt="Logo" />
+    </div>
+    <h1>Registro de Alumnos</h1>
+    <p>¡Bienvenido! Registra a tus alumnos de manera fácil y rápida.</p>
+  </div>
+
+  <!-- Alertas -->
+  <div class="alert-container" id="alertContainer"></div>
+
+  <div class="container mt-5">
+    <!-- Formulario -->
+    <div class="row justify-content-center">
+      <div class="col-md-8 form-section">
+        <h3 class="text-center">Formulario de Registro</h3>
+        <form id="formAlumno">
+          <input type="hidden" id="id" />
+          <div class="row g-3">
+            <div class="col-md-4">
+              <input type="text" class="form-control" placeholder="Nombre" id="nombre" required />
+            </div>
+            <div class="col-md-4">
+              <input type="text" class="form-control" placeholder="Apellido" id="apellido" required />
+            </div>
+            <div class="col-md-2">
+              <input type="number" class="form-control" placeholder="Edad" id="edad" required />
+            </div>
+            <div class="col-md-4">
+              <input type="email" class="form-control" placeholder="Correo" id="correo" required />
+            </div>
+            <div class="col-md-8">
+              <input type="text" class="form-control" placeholder="Dirección" id="direccion" required />
+            </div>
+            <div class="col-md-4 d-grid">
+              <button class="btn btn-primary" type="submit" id="btnGuardar">Guardar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+      <h3 class="text-center mb-4">Lista de Alumnos</h3>
+      <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Edad</th>
+            <th>Correo</th>
+            <th>Dirección</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaAlumnos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pie de página -->
+  <div class="footer">
+    <p>&copy; 2025 CREADO POR KENPACHI.</p>
+  </div>
+
+  <script>
+    const form = document.getElementById("formAlumno");
+    const tabla = document.getElementById("tablaAlumnos");
+    const btnGuardar = document.getElementById("btnGuardar");
+    const alertContainer = document.getElementById("alertContainer");
+    let modoEdicion = false;
+
+    const mostrarAlerta = (mensaje, tipo = "success") => {
+      const alerta = document.createElement("div");
+      alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+      alerta.role = "alert";
+      alerta.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      alertContainer.appendChild(alerta);
+      setTimeout(() => alerta.remove(), 3000);
+    };
+
+    const obtenerAlumnos = async () => {
+      const res = await fetch("/alumnos/");
+      const alumnos = await res.json();
+      tabla.innerHTML = "";
+      alumnos.forEach(alumno => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${alumno.id}</td>
+            <td>${alumno.nombre}</td>
+            <td>${alumno.apellido}</td>
+            <td>${alumno.edad}</td>
+            <td>${alumno.correo}</td>
+            <td>${alumno.direccion}</td>
+            <td>
+              <button onclick="editar(${alumno.id}, '${alumno.nombre}', '${alumno.apellido}', ${alumno.edad}, '${alumno.correo}', '${alumno.direccion}')" class="btn btn-warning btn-sm me-1">Editar</button>
+              <button onclick="eliminar(${alumno.id})" class="btn btn-danger btn-sm">Eliminar</button>
+            </td>
+          </tr>`;
+      });
+    };
+
+    const editar = (id, nombre, apellido, edad, correo, direccion) => {
+      document.getElementById("id").value = id;
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("apellido").value = apellido;
+      document.getElementById("edad").value = edad;
+      document.getElementById("correo").value = correo;
+      document.getElementById("direccion").value = direccion;
+      btnGuardar.textContent = "Actualizar";
+      modoEdicion = true;
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const alumno = {
+        nombre: document.getElementById("nombre").value,
+        apellido: document.getElementById("apellido").value,
+        edad: parseInt(document.getElementById("edad").value),
+        correo: document.getElementById("correo").value,
+        direccion: document.getElementById("direccion").value
+      };
+
+      const id = document.getElementById("id").value;
+
+      if (modoEdicion) {
+        await fetch(`/alumnos/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(alumno)
+        });
+        mostrarAlerta("Alumno actualizado correctamente", "info");
+        btnGuardar.textContent = "Guardar";
+        modoEdicion = false;
+      } else {
+        await fetch("/alumnos/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(alumno)
+        });
+        mostrarAlerta("Alumno registrado con éxito");
+      }
+
+      form.reset();
+      obtenerAlumnos();
+    });
+
+    const eliminar = async (id) => {
+      await fetch(`/alumnos/${id}`, { method: "DELETE" });
+      mostrarAlerta("Alumno eliminado", "danger");
+      obtenerAlumnos();
+    };
+
+    window.onload = obtenerAlumnos;
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
