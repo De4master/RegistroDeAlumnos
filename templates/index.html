@@ -152,24 +152,31 @@
     };
 
     const obtenerAlumnos = async () => {
-      const res = await fetch("/alumnos/");
-      const alumnos = await res.json();
-      tabla.innerHTML = "";
-      alumnos.forEach(alumno => {
-        tabla.innerHTML += `
-          <tr>
-            <td>${alumno.id}</td>
-            <td>${alumno.nombre}</td>
-            <td>${alumno.apellido}</td>
-            <td>${alumno.edad}</td>
-            <td>${alumno.correo}</td>
-            <td>${alumno.direccion}</td>
-            <td>
-              <button onclick="editar(${alumno.id}, '${alumno.nombre}', '${alumno.apellido}', ${alumno.edad}, '${alumno.correo}', '${alumno.direccion}')" class="btn btn-warning btn-sm me-1">Editar</button>
-              <button onclick="eliminar(${alumno.id})" class="btn btn-danger btn-sm">Eliminar</button>
-            </td>
-          </tr>`;
-      });
+      try {
+        const res = await fetch("https://registrodealumnos.onrender.com/alumnos/");
+        if (!res.ok) {
+          throw new Error("Error al obtener los alumnos");
+        }
+        const alumnos = await res.json();
+        tabla.innerHTML = "";
+        alumnos.forEach(alumno => {
+          tabla.innerHTML += `
+            <tr>
+              <td>${alumno.id}</td>
+              <td>${alumno.nombre}</td>
+              <td>${alumno.apellido}</td>
+              <td>${alumno.edad}</td>
+              <td>${alumno.correo}</td>
+              <td>${alumno.direccion}</td>
+              <td>
+                <button onclick="editar(${alumno.id}, '${alumno.nombre}', '${alumno.apellido}', ${alumno.edad}, '${alumno.correo}', '${alumno.direccion}')" class="btn btn-warning btn-sm me-1">Editar</button>
+                <button onclick="eliminar(${alumno.id})" class="btn btn-danger btn-sm">Eliminar</button>
+              </td>
+            </tr>`;
+        });
+      } catch (error) {
+        console.error("Error obteniendo los alumnos:", error);
+      }
     };
 
     const editar = (id, nombre, apellido, edad, correo, direccion) => {
@@ -196,32 +203,40 @@
 
       const id = document.getElementById("id").value;
 
-      if (modoEdicion) {
-        await fetch(`/alumnos/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(alumno)
-        });
-        mostrarAlerta("Alumno actualizado correctamente", "info");
-        btnGuardar.textContent = "Guardar";
-        modoEdicion = false;
-      } else {
-        await fetch("/alumnos/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(alumno)
-        });
-        mostrarAlerta("Alumno registrado con éxito");
-      }
+      try {
+        if (modoEdicion) {
+          await fetch(`https://registrodealumnos.onrender.com/alumnos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(alumno)
+          });
+          mostrarAlerta("Alumno actualizado correctamente", "info");
+          btnGuardar.textContent = "Guardar";
+          modoEdicion = false;
+        } else {
+          await fetch("https://registrodealumnos.onrender.com/alumnos/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(alumno)
+          });
+          mostrarAlerta("Alumno registrado con éxito");
+        }
 
-      form.reset();
-      obtenerAlumnos();
+        form.reset();
+        obtenerAlumnos();
+      } catch (error) {
+        console.error("Error al guardar el alumno:", error);
+      }
     });
 
     const eliminar = async (id) => {
-      await fetch(`/alumnos/${id}`, { method: "DELETE" });
-      mostrarAlerta("Alumno eliminado", "danger");
-      obtenerAlumnos();
+      try {
+        await fetch(`https://registrodealumnos.onrender.com/alumnos/${id}`, { method: "DELETE" });
+        mostrarAlerta("Alumno eliminado", "danger");
+        obtenerAlumnos();
+      } catch (error) {
+        console.error("Error al eliminar el alumno:", error);
+      }
     };
 
     window.onload = obtenerAlumnos;
